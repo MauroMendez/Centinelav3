@@ -1,0 +1,135 @@
+﻿{
+   "CodeGenerationMode": 2,
+   "ContextClassName": "Intererpv3testContext",
+   "ContextNamespace": null,
+   "DefaultDacpacSchema": null,
+   "FilterSchemas": false,
+   "IncludeConnectionString": false,
+   "ModelNamespace": null,
+   "OutputContextPath": null,
+   "OutputPath": "Data\/sql",
+   "ProjectRootNamespace": "CentinelaV3",
+   "Schemas": null,
+   "SelectedHandlebarsLanguage": 0,
+   "SelectedToBeGenerated": 0,
+   "Tables": [
+      {
+         "Name": "[dbo].[Alumno]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[AlumnoPagos]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[becaalubitacora]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[becaAlumno]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Becas]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[campana]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Carreras]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[CatalogoConceptos]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ConfiguracionPagos]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ContactoProspecto]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[CuentasPorCobrar]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[DetalleCuentaPorCobrar]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[DetallePago]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[DetalleReferencia]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[EsquemaPago]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[EstatusList]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Folio]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[GeneralesAlumno]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[GeneralesProspecto]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ListaPrecios]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Niveles]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Referencias]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[SolicitudPago]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[usuario]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[VResolutivoBeca]",
+         "ObjectType": 3
+      }
+   ],
+   "UiHint": "VMC891B78.InterERPv3Test",
+   "UseBoolPropertiesWithoutDefaultSql": false,
+   "UseDatabaseNames": false,
+   "UseDbContextSplitting": false,
+   "UseFluentApiOnly": true,
+   "UseHandleBars": false,
+   "UseHierarchyId": false,
+   "UseInflector": false,
+   "UseLegacyPluralizer": false,
+   "UseManyToManyEntity": false,
+   "UseNoConstructor": false,
+   "UseNoDefaultConstructor": false,
+   "UseNoNavigations": false,
+   "UseNoObjectFilter": false,
+   "UseNodaTime": false,
+   "UseNullableReferences": false,
+   "UseSchemaFolders": false,
+   "UseSpatial": false
+}
