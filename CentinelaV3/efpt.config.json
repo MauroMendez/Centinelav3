@@ -14,11 +14,59 @@
    "SelectedToBeGenerated": 0,
    "Tables": [
       {
+         "Name": "[dbo].[ActivoPara]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[AdminHorario]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[AdministrativoDatosBancarios]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Administrativos]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[AlergiaPaciente]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Alergias]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[Alumno]",
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[AlumnoBaja]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[AlumnoPagos]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[AlumnoPO]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Areas]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[AutorizoDescuento]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[BajaAdministrativo]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Bancos]",
          "ObjectType": 0
       },
       {
@@ -34,7 +82,35 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[BitacoraDetalle]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[BitacoraGral]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Boleta]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[CalificacionesMateria]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[campana]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[campanameta]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[CancelacionCuenta]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[CancelacionPagos]",
          "ObjectType": 0
       },
       {
@@ -42,7 +118,35 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[CarrerasInteres]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[CatalogoCancelacion]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[CatalogoConceptos]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[CatalogoConvenios]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[CatalogoSaltoPago]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Categoriabeca]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ClasesGrupo]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ConfiguracionCorreo]",
          "ObjectType": 0
       },
       {
@@ -50,7 +154,27 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[Consulta]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[ContactoProspecto]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ConvenioHistorico]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ConvenioParcialidad]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Convenios]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[CuentaBancaria]",
          "ObjectType": 0
       },
       {
@@ -58,7 +182,31 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[DatosFacturacion]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[DatosMedicos]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[DatosParticipantes]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[DetalleCancelacionPago]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[DetalleConvenio]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[DetalleCuentaPorCobrar]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[DetalleEsquema]",
          "ObjectType": 0
       },
       {
@@ -70,7 +218,67 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[DocumentoAlumno]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[DocumentoBitacora]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Documentos]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[DocumentosGenerales]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[DocumentosHistorial]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[DocumentosNivel]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Edificios]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[EgresadoHistorial]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Empresas]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Errores]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[EscolaridadAdmin]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Escuelas]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Escuelasf]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[EsquemaPago]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[EsquemaPagoHistorial]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Estados]",
          "ObjectType": 0
       },
       {
@@ -78,7 +286,43 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[ExpProfecional]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Facturas]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Facultades]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[FaltasClase]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ferias]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[FirmaReglamentosCV]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[Folio]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[FormaPago]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[FormaPagoTxt]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[GeneralesAdministrativos]",
          "ObjectType": 0
       },
       {
@@ -90,7 +334,103 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[GrupoAlumno]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Grupos]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[HijosAdmin]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[HistoricoBeca]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[HistoricoPlanesEstudio]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[HistoricoPorcentaje]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[HistoricoPrecios]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Horarios]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[IAdministrativos]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Justificantes]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Kardex]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[ListaPrecios]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Materias]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[MateriasImparteDocente]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[mediosContacto$]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[MediosDifusion]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[MetodoPago]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Modalidades]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ModificacionesEsquemaPago]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Modulo]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Momento]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Monedas]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[MoodleKey]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Municipios]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Nacionalidades]",
          "ObjectType": 0
       },
       {
@@ -98,7 +438,119 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[NivelesHistorial]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Noticias]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[PagoTarjeta]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[pantalla]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[PeriodoHistorico]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Periodos]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Permisos]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[PermisosAlumnos]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[PermisosPuestos]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[PermisosStatus]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[PlanesEstudio]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[PlanEstudioHistorico]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[PorcentageBecaHistoricoProspecto]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ProgramasCV]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Puestos]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[PuestosHistorial]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Query]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[RAvisodeudores]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[RCobranza]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[RDeudores]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[RDeudoresdiario]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[Referencias]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[RegistroChecador]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[RegistrosCV]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Reglamentos]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[rol]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[RPayuRegistro]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Salones]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Seguimiento]",
          "ObjectType": 0
       },
       {
@@ -106,15 +558,231 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[StatusHistorial]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[StatusPago]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[TBusuario]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[TBususesion]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[tipo_becas]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[TipoBajaAlumno]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[TipoCalificaciones]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[TipoHorario]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[TipoPagoAdmin]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[TipoPersonas]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[TiposDocumentos]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[TipoSeguimiento]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[TiposJustificante]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Tpermisos]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Transfpayu]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[UsosFacturacion]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[usuario]",
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[datosP]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[ExisteP]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[InscritosUsuario]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[PagosRegistradosFitness]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[Vbecas_conceptos]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[Vbitacorabecas]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[VControlDocumento]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[VDatosOxxo]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[Vexistecbeca]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[VExisteM]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[VHistorialEstatusAl]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[VIdsolicitud]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[VIdstarjeta]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[ViewAlumnos]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[ViewAlumnosConPagoActual]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[ViewAlumnosINRE]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[ViewCuentasConvenio]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[ViewDeudores]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[ViewDeudoresPorAlumno]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[ViewPagoAlumno]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[ViewPagosPendientes]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[ViewPagosRegistrados]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[ViewReporteConvenios]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[ViewReportesCRM]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[ViewRPTPagosConceptos]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[VIncritosCamp]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[VIncritosUSU]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[VPropectosIncritos]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[VprosInscritos]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[Vprospectos]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[VProspIndividual]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[VProsUSU]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[VRepFormEspCRM]",
+         "ObjectType": 3
+      },
+      {
          "Name": "[dbo].[VResolutivoBeca]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[Vseg_prog_user]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[VsegT_prog_user]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[VSolicitud]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[VSolicitudPO]",
+         "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[Vusuario]",
          "ObjectType": 3
       }
    ],
-   "UiHint": "VMC891B78.InterERPv3Test",
+   "UiHint": "VMC891B78.InterERPv3Pruebas",
    "UseBoolPropertiesWithoutDefaultSql": false,
    "UseDatabaseNames": false,
    "UseDbContextSplitting": false,

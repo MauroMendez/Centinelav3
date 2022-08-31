@@ -1,4 +1,5 @@
 ﻿using CentinelaV3.Data.sql;
+using CentinelaV3.Data.npsql;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -8,6 +9,9 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Xml;
+using System.Net.Mail;
+using System.Collections.Specialized;
+using System.Net.Http;
 
 namespace CentinelaV3
 {
@@ -37,7 +41,7 @@ namespace CentinelaV3
                     if (solicitudPago.EfectivoMetodoPago == 1)
                     {
                         metodoPago = "OXXO";
-                        formaPago = 4;
+                        formaPago = 6;
                     }
                     else if (solicitudPago.EfectivoMetodoPago == 5)
                     {
@@ -107,6 +111,7 @@ namespace CentinelaV3
                         {
 
                             estatus = nodo.InnerText;
+
                             //estatus = "APPROVED";
 
                         }
@@ -144,165 +149,664 @@ namespace CentinelaV3
                     // Si la solicitud fue aprovada
                     if (estatus.Trim() == "APPROVED")
                     {
+                        
                         Console.WriteLine("Transacción aprovada");
 
                         string AP = solicitudPago.Alumno.Substring(0, 1);
                         int metodo = Convert.ToInt16(solicitudPago.EfectivoMetodoPago);
 
                         //AP == "P"
-                        if (AP == "P")
+                        if (solicitudPago.Alumno.Contains("-P") || solicitudPago.Alumno.Contains("P"))
                         {
+                            string mat = solicitudPago.Alumno.Replace("-", "").Trim();
                             Console.WriteLine("Es un prospecto");
-                            //obtenemos el prospecto
-                            GeneralesProspecto pros = (from PS in context.GeneralesProspecto where PS.GpporsMat == solicitudPago.Alumno select PS).FirstOrDefault();
 
+
+                            //obtenemos el prospecto
+                            GeneralesProspecto pros = (from PS in context.GeneralesProspecto where PS.GpporsMat == mat select PS).FirstOrDefault();
+
+                            string matricula = "";
+                            matricula = GeneraM(pros, 9);
+
+                            //Obtenemos el id del alumno
+
+                            long aluid = (from AL in context.Alumno where AL.AlMatricula.Trim() == matricula.Trim() select AL.AlId).FirstOrDefault();
                             //Obtenemos su referencia
                             Referencias referencia = (from RF in context.Referencias where RF.RReferencia == solicitudPago.RReferenciaId select RF).FirstOrDefault();
 
+
                             // creamos nuevo objeto para agregar un AlumnoPagos
-                            AlumnoPagos pago = new AlumnoPagos()
+                            AlumnoPagos ALUP = (from APA in context.AlumnoPagos where APA.ApReferencia.Trim() == mat.Trim() select APA).FirstOrDefault();
+
+                            if (ALUP != null)
                             {
-                                ApAlumnoId = 0,
-                                ApAlumnoClave = solicitudPago.Alumno,
-                                ApCuentaBancaria = cuentaBancaria,
-                                ApMetodoPago = metodo,
-                                ApFormaPagoId = formaPago,
-                                ApMoneda = 1,
-                                ApImportePendiente = solicitudPago.EfectivoMonto,
-                                ApImporteTotal = solicitudPago.EfectivoMonto,
-                                ApReferenciaId = referencia.RReferenciaId,
-                                ApReferencia = referencia.RReferencia,
-                                ApReferenciaBancaria = "Pago en línea",
-                                ApNoAprobacion = "",
-                                ApObservaciones = "Pago en línea",
-                                ApFechaCreacion = DateTime.Now,
-                                ApFechaContable = DateTime.Now,
-                                ApFechaBancaria = DateTime.Now,
-                                ApEstatus = 21,
-                                ApUsuid = 9
-                            };
-
-
-                            // agrega alumno pagos
-                            //int addAP = AddAlumnosPagos(pago);
-
-                            string AddAP = AddAlumnoPagos(pago);
-
-                            //Si hubo un error en la insersión termina la ejecución
-                            if (AddAP.ToUpper().Contains("ERROR"))
+                                Console.WriteLine("ya existe el pago de este alumno");
+                            }
+                            else
                             {
-                                Console.WriteLine(AddAP);
-                                return;
+                                AlumnoPagos pago = new AlumnoPagos();
+
+                                pago.ApAlumnoId = aluid;
+                                pago.ApAlumnoClave = matricula;
+                                pago.ApCuentaBancaria = cuentaBancaria;
+                                pago.ApMetodoPago = metodo;
+                                pago.ApFormaPagoId = formaPago;
+                                pago.ApMoneda = 1;
+                                pago.ApImportePendiente = solicitudPago.EfectivoMonto;
+                                pago.ApImporteTotal = solicitudPago.EfectivoMonto;
+                                if (referencia == null)
+                                {
+                                    pago.ApReferenciaId = 1;
+                                    pago.ApReferencia = mat;
+                                }
+                                else
+                                {
+                                    pago.ApReferenciaId = referencia.RReferenciaId;
+                                    pago.ApReferencia = referencia.RReferencia;
+                                }
+                                pago.ApReferenciaBancaria = "Pago en línea";
+                                pago.ApNoAprobacion = "";
+                                pago.ApObservaciones = "Pago en línea";
+                                pago.ApFechaCreacion = DateTime.Now;
+                                pago.ApFechaContable = DateTime.Now;
+                                pago.ApFechaBancaria = DateTime.Now;
+                                pago.ApEstatus = 21;
+                                pago.ApUsuid = 9;
+
+
+
+                                // agrega alumno pagos
+                                //int addAP = AddAlumnosPagos(pago);
+
+                                string AddAP = AddAlumnoPagos(pago);
+
+                                //Si hubo un error en la insersión termina la ejecución
+                                if (AddAP.ToUpper().Contains("ERROR"))
+                                {
+                                    Console.WriteLine(AddAP);
+                                    return;
+                                }
+
+                                // obtenemos el id del pago creado
+                                int idPago = ObtenerPagoIdMatricula(pago.ApAlumnoClave);
+                                // obtenemos el id de la referencia
+                                int idRef = (int)ObtIdReferenciaRef(pago.ApReferencia);
                             }
 
-                            // obtenemos el id del pago creado
-                            int idPago = ObtenerPagoIdMatricula(pago.ApAlumnoClave);
-                            // obtenemos el id de la referencia
-                            int idRef = (int)ObtIdReferenciaRef(pago.ApReferencia);
 
-                            //Genero alumno y obtengo la matricula
-                            string matricula = GeneraM(pros, 9);
 
-                            if (matricula.ToUpper().Contains("ERROR"))
-                            {
-                                return;
-                            }
 
-                            // Obtenemos el alumno
+                            //// Obtenemos el alumno
                             Alumno alumno = ObtAlumnoMatricula(matricula);
 
-                            //obtenemos su lista de precios de su cuota
-                            ListaPrecios listap = ObtListaPrecio((int)alumno.AlCoutaAdmin);
+                            //Paso de alumno a la v2
+                            string carrera = "";
+                            int periodo = 0, anio = 0;
+                            Campana campana = new Campana();
+                            Carreras carreras = new Carreras();
+                            GeneralesProspecto prospecto = new GeneralesProspecto();
 
-                            // Registramos la cuota administrativa
-                            string regConcepto = RegistraConcepto(alumno.AlId, 9, alumno.AlAnoPeriodoActual, alumno.AlPeriodoActual, listap, DateTime.Now, 1);
+                            prospecto = context.GeneralesProspecto.First(gp => gp.GpporsMat == mat);
+                            campana = GetCampana(prospecto.Campid);
+                            carreras = context.Carreras.First(c => c.Idcarrera == prospecto.Idcarrera);
+                            int idcrm = 0;
 
-                            // si no se creo la cuenta por cobrar
-                            if (regConcepto.ToUpper().Contains("ERROR"))
+                            periodo = campana.Campperiodo;
+                            anio = campana.Campanio;
+                            carrera = carreras.CarreraClave.Trim();
+                            using (var _npgsql_Context = new npsqlContext())
                             {
-                                // termina el proceso 
-                                return;
-                            }
+                                int crmidv2 = (from TCRM in _npgsql_Context.Tcrm where TCRM.Crmclave == prospecto.GpporsMat.Trim() select TCRM.Crmid).FirstOrDefault();
+                                int ulid = _npgsql_Context.Tcrm.Max(x => x.Crmid);
 
-                            // OBTENEMOS EL ESQUEMA DE PAGO ASIGNADO AL ALUMNO
-                            EsquemaPago esquema = ObtEsquema(alumno.AlEsquemaPagoActual);
-
-                            //registramos el esquema de las parcialidades
-                            string regEsquema = RegistraEsquema(alumno.AlId, 9, alumno.AlAnoPeriodoActual, alumno.AlPeriodoActual, esquema);
-
-                            // si hay un error al registrar el esquemna
-                            if (regEsquema.ToUpper().Contains("ERROR"))
-                            {
-                                // termina el proceso
-                                return;
-                            }
-
-                            // obtenemos la cuenta por cobrar creada del esquema
-                            int cuentaEsquema = ObtCuentaPorCobrarAlumno(alumno.AlId);
-
-                            // si el alumno tiene beca
-                            if (alumno?.AlBecaActual > 0)
-                            {
-                                // obtenemos la beca registrada de alumno
-                                VresolutivoBeca beca = traer_resolutivoNI(alumno.AlId);
-
-                                // se hace la asignación de la beca a la cuenta por cobrar
-                                string regBecaConceptos = cargaCuentas(beca);
-
-                                if (regBecaConceptos.ToUpper().Contains("ERROR"))
+                                if (crmidv2 == 0)
                                 {
-                                    Console.WriteLine(regBecaConceptos);
+                                    Tcrm tc = new Tcrm();
+                                    tc.Crmid = ulid + 1;
+                                    tc.Crmclave = prospecto.GpporsMat;
+                                    //tc.Crmnombre = vp.NombreCompleto;
+                                    tc.Crmnombre = prospecto.GpNombre;
+                                    tc.Crmapaterno = prospecto.GpApp;
+                                    tc.Crmamaterno = prospecto.GpApm;
+                                    tc.Crmfenac = DateTime.Now;
+                                    tc.Crmedad = 0;
+                                    tc.Crmsexo = 'H';
+                                    tc.Crmedocivil = 'S';
+                                    tc.Crmpaisid = 0;
+                                    tc.Crmnacionalidad = "MEXICANA";
+                                    tc.Crmedo = 0;
+                                    tc.Crmmunicipio = 0;
+                                    tc.Crmdireccion = "";
+                                    tc.Crmcp = "";
+                                    tc.Crmcomentarios = "";
+                                    tc.Crmcompany = 1;
+                                    tc.Crmactivo = 1;
+                                    tc.Crmimagen = new byte[1];
+                                    tc.CrmimagenGxi = "";
+                                    tc.Crmcat01 = "";
+                                    tc.Crmcat02 = "";
+                                    tc.Crmcat03 = "";
+                                    tc.Crmcat04 = "";
+                                    tc.Crmcat05 = "";
+                                    tc.Crmcat06 = "";
+                                    tc.Crmcat07 = "";
+                                    tc.Crmcat08 = "";
+                                    tc.Crmcat09 = "";
+                                    tc.Crmcat10 = "";
+                                    tc.Crmmoneda = "MX";
+                                    tc.Crmmanagercrd = 0;
+                                    tc.Crmmanagercrb = 0;
+                                    tc.Crmregusuario = 0;
+                                    tc.Crmregfecha = DateTime.Now;
+                                    tc.Crmreghora = "";
+                                    tc.Crmregprog = "";
+                                    tc.Crmmodusuario = 0;
+                                    tc.Crmmodfecha = DateTime.Now;
+                                    tc.Crmmodhora = "";
+                                    tc.Crmmodprog = "";
+
+                                    string msj21 = "";
+                                    try
+                                    {
+                                        _npgsql_Context.Tcrm.Add(tc);
+                                        _npgsql_Context.SaveChanges();
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        msj21 = e.Message;
+                                    }
+
+                                    int crmidv3 = (from TCRM in _npgsql_Context.Tcrm where TCRM.Crmclave == prospecto.GpporsMat.Trim() select TCRM.Crmid).FirstOrDefault();
+
+                                    idcrm = crmidv3;
+                                }
+                                else
+                                {
+                                    idcrm = crmidv2;
+                                }
+
+                                Talumno tal = (from TAL in _npgsql_Context.Talumno where TAL.Alunocontrol.Trim() == matricula.Trim() select TAL).FirstOrDefault();
+
+                                if (tal != null)
+                                {
+                                    Console.WriteLine("Ya existe registro de este alumno");
+                                    //return;
+                                }
+                                else
+                                {
+
+
+
+                                    Talumno alumov2 = new Talumno();
+
+                                    //insersion de alumno
+                                    alumov2.Aluid = idcrm;
+                                    alumov2.Alucompany = 0;
+                                    if (alumno == null)
+                                    {
+                                        alumov2.Alunocontrol = prospecto.Gpmatricula.Trim();
+                                    }
+                                    else
+                                    {
+                                        alumov2.Alunocontrol = alumno.AlMatricula.Trim();
+                                    }
+
+                                    alumov2.Alunoverifica = '1';
+                                    alumov2.Alunoant = "";
+                                    alumov2.Alunovant = ' ';
+                                    alumov2.Alunopro = prospecto.GpporsMat.Trim();
+                                    alumov2.Alunovpro = ' ';
+                                    alumov2.Aluescprocedencia = " ";
+                                    alumov2.Aluintereses = " ";
+                                    alumov2.Alumunicipio2 = " ";
+                                    alumov2.Aluestatusid = 3478;
+                                    alumov2.Tpaident = "";
+                                    alumov2.Covid = 1;
+                                    alumov2.Alugeneracta = 0;
+                                    alumov2.Aluimporte = 0;
+                                    alumov2.Aluinspago = " ";
+                                    alumov2.Aluadeudo = 0;
+                                    alumov2.Aluretenfac = 0;
+                                    alumov2.Alucredlim = 40000;
+                                    alumov2.Alucredmsg = "";
+                                    alumov2.Alucredopen = "";
+                                    alumov2.Alucredreview = "";
+                                    alumov2.Alucredfopen = DateTime.MinValue;
+                                    alumov2.Alucredfreview = DateTime.MinValue;
+                                    alumov2.Alucredfnreview = DateTime.MinValue;
+                                    alumov2.Alucredmsgtmp = "";
+                                    alumov2.Alucbrpolitica = "";
+                                    alumov2.Alucbrenviocta = ' ';
+                                    alumov2.Alucbrreporte = 0;
+                                    alumov2.Alucbrpedo = 0;
+                                    alumov2.Alucbrmorozidad = 0;
+                                    alumov2.Alucbravisosmor = 0;
+                                    alumov2.Aluactivo = 1;
+                                    alumov2.Aluregusuario = 0;
+                                    alumov2.Aluregfecha = DateTime.Now;
+                                    alumov2.Alureghora = "";
+                                    alumov2.Aluregprog = "PPasePRS_CRM_ManV2";
+                                    alumov2.Alumodfecha = DateTime.Now;
+                                    alumov2.Alumodhora = "";
+                                    alumov2.Alumodprog = "PPasePRS_CRM_ManV2";
+                                    alumov2.Alufac = null;
+                                    alumov2.Alufacrfc = null;
+                                    alumov2.Alufacrazons = null;
+                                    alumov2.Alufacdir = null;
+                                    alumov2.Alufacemail = null;
+                                    alumov2.Alugeneracion = null;
+
+
+                                    //GeneralesProspecto gp = (from GP in _context.GeneralesProspecto where GP.GpporsMat == prospecto.GpporsMat.Trim() select GP).FirstOrDefault();
+
+                                    if (prospecto.Idcarrera == 10)
+                                    {
+                                        alumov2.Aludivision = "BAC";
+                                    }
+                                    else if (prospecto.Idcarrera == 49 || prospecto.Idcarrera == 51 || prospecto.Idcarrera == 53 || prospecto.Idcarrera == 58 || prospecto.Idcarrera == 59 || prospecto.Idcarrera == 61)
+                                    {
+                                        alumov2.Aludivision = "EDC";
+                                    }
+                                    else
+                                    {
+                                        alumov2.Aludivision = "LIC";
+                                    }
+
+
+                                    Tprospecto pro = (from PRO in _npgsql_Context.Tprospecto where PRO.Prsnocontrol.Trim() == prospecto.GpporsMat.Trim() select PRO).FirstOrDefault();
+                                    alumov2.Alureganio = pro.Prspyear;
+
+                                    if (pro.Prsperiodo.Trim() == "PRIMAVERA")
+                                    {
+                                        alumov2.Aluregperiodo = 1;
+                                    }
+                                    else if (pro.Prsperiodo.Trim() == "VERANO")
+                                    {
+                                        alumov2.Aluregperiodo = 2;
+                                    }
+                                    else if (pro.Prsperiodo.Trim() == "OTOÑO")
+                                    {
+                                        alumov2.Aluregperiodo = 3;
+                                    }
+
+                                    alumov2.Aluestatusacademico = 1;
+                                    alumov2.Alumodalidad = "PRE";
+                                    alumov2.Aluestado = "21";
+                                    alumov2.Alucp = "";
+                                    alumov2.Aluciudadnac = "";
+                                    alumov2.Alufactipo = null;
+                                    alumov2.Alufacverificacion = null;
+                                    alumov2.Alufacfechareg = null;
+                                    alumov2.Alufachorareg = null;
+                                    alumov2.Alufacsolicitud = null;
+                                    alumov2.Alufacusuid = null;
+                                    alumov2.Alusexot = null;
+                                    alumov2.Aluocupaciont = null;
+                                    alumov2.Aluingresot = null;
+                                    alumov2.Aluresidencia = null;
+                                    alumov2.Alulocalidad = null;
+                                    //alumov2.alufacregimen = "";
+
+                                    string msj = "";
+                                    string addAluv2 = "";
+
+                                    try
+                                    {
+                                        _npgsql_Context.Talumno.Add(alumov2);
+                                        _npgsql_Context.SaveChanges();
+                                        addAluv2 = "alumno agregado en la versión 2";
+                                    }
+                                    catch (Exception e)
+                                    {
+
+                                        addAluv2 = "ERROR:" + e.Message;
+                                    }
+
+
+                                    //Insersion de alumno en tabla taalumno conexion 
+                                    int idCon = _npgsql_Context.Taalumnoconexion.Max(x => x.Aacfid);
+                                    Taalumnoconexion taalumnoconexion = new Taalumnoconexion();
+                                    taalumnoconexion.Aluid = alumov2.Aluid;
+                                    taalumnoconexion.Aacfid = idCon + 1;
+                                    taalumnoconexion.Aacfoto = new byte[1];
+                                    taalumnoconexion.AacfotoGxi = "";
+                                    taalumnoconexion.Aacfcurp = "";
+                                    taalumnoconexion.Aacftelefono = pro.Prstelefono.Trim();
+                                    taalumnoconexion.Aacfmail = pro.Prsemergenciaemail.Trim();
+                                    taalumnoconexion.Aacfnomtutor = pro.Prsnombre.Trim();
+                                    taalumnoconexion.Aacfapellidop = pro.Prsapaterno.Trim();
+                                    taalumnoconexion.Aacfapellidom = pro.Prsamaterno.Trim();
+
+
+                                    //GeneralesProspecto gp = (from GP in context2.GeneralesProspecto where GP.GpporsMat == al.Alunopro.Trim() select GP).FirstOrDefault();
+
+                                    if (prospecto == null)
+                                    {
+                                        Console.WriteLine("No se encontro ninguna direccion: ");
+                                    }
+                                    else
+                                    {
+                                        taalumnoconexion.Aacfcolonia = prospecto.GpDireccion.Trim();
+                                        taalumnoconexion.Aacsemestreactual = (short?)prospecto.GpSemestre;
+                                    }
+
+                                    //string carrera = (from CA in context2.Carreras where CA.Idcarrera == gp.Idcarrera select CA.CarreraClave).FirstOrDefault();
+                                    taalumnoconexion.Acarid = carrera.Trim();
+
+                                    //alu.Aacfcallenumcont = "";
+                                    taalumnoconexion.Aacfcallenum = "";
+                                    taalumnoconexion.Aacfmunicipio = "";
+                                    taalumnoconexion.Aacfestado = "PUEBLA";
+                                    taalumnoconexion.Aacftelefonot = pro.Prstelefono.Trim();
+                                    taalumnoconexion.Aacfmail = pro.Prsemergenciaemail.Trim();
+                                    taalumnoconexion.Aacfalergias = null;
+                                    taalumnoconexion.Aacftiposangre = null;
+                                    taalumnoconexion.Aacfpadecimientos = null;
+                                    taalumnoconexion.Aacfcomentarios = null;
+                                    taalumnoconexion.Aacfsecundaria = null;
+                                    taalumnoconexion.Aacfseclugar = null;
+                                    taalumnoconexion.Aacfsecedo = null;
+                                    taalumnoconexion.Aacfbachiller = null;
+                                    taalumnoconexion.Aacfbachlugar = null;
+                                    taalumnoconexion.Aacfbachedo = null;
+                                    taalumnoconexion.Aacfparentescocont = null;
+                                    taalumnoconexion.Aacftelefonocont = null;
+                                    taalumnoconexion.Aacfedocont = null;
+                                    taalumnoconexion.Aacfamunicipiocont = null;
+                                    taalumnoconexion.Aacfcallenumcont = null;
+                                    taalumnoconexion.Aacfcoloniacont = null;
+                                    taalumnoconexion.Aacfamaternocont = null;
+                                    taalumnoconexion.Aacfapaternocont = null;
+                                    taalumnoconexion.Aacfnombrecont = null;
+                                    taalumnoconexion.Aacfunirev = null;
+                                    taalumnoconexion.Aacfnia = null;
+                                    taalumnoconexion.Aacsemestregrupo = null;
+                                    taalumnoconexion.Aacffb = null;
+                                    taalumnoconexion.Aacfreligion = null;
+                                    taalumnoconexion.Aacfresidente = null;
+                                    taalumnoconexion.Aacforiginario = null;
+                                    taalumnoconexion.Aacfcedula = null;
+                                    taalumnoconexion.Aacftipotitulacion = null;
+                                    taalumnoconexion.Aacffechatitulacion = null;
+                                    taalumnoconexion.Aacfhoratitulacion = null;
+                                    taalumnoconexion.Aacfnolibro = null;
+                                    taalumnoconexion.Aacffoja = null;
+                                    taalumnoconexion.Aacfnolibroo = null;
+                                    taalumnoconexion.Aacffojao = null;
+                                    taalumnoconexion.Aacfegreanio = null;
+                                    taalumnoconexion.Aacfegreperiodo = null;
+                                    taalumnoconexion.Aacftituladoanio = null;
+                                    taalumnoconexion.Aacftituladoperiodo = null;
+                                    taalumnoconexion.Aacfbachpais = null;
+                                    taalumnoconexion.Aacfextranjero = null;
+                                    taalumnoconexion.Aacfegresado = 0;
+                                    taalumnoconexion.Aacftitulado = 0;
+                                    taalumnoconexion.Aacfcertificado = null;
+                                    taalumnoconexion.Aacgrupo = null;
+                                    taalumnoconexion.Aacftitulotesis = null;
+                                    taalumnoconexion.Aacftelefonoc = null;
+                                    taalumnoconexion.Aacffacebook = null;
+                                    taalumnoconexion.Aacftwitter = null;
+                                    taalumnoconexion.Aacfsuspendido = null;
+                                    taalumnoconexion.Aacfacusado = null;
+                                    taalumnoconexion.Aacfseguro = null;
+                                    taalumnoconexion.Aacfbachprom = null;
+                                    taalumnoconexion.Aacfbachcert = null;
+                                    taalumnoconexion.Aacfgradoest = null;
+                                    taalumnoconexion.Aacfequimat = null;
+                                    taalumnoconexion.Aacfnacionalidad = null;
+                                    taalumnoconexion.Aacmodalidad = null;
+                                    taalumnoconexion.Aacffechanact = null;
+
+                                    try
+                                    {
+                                        _npgsql_Context.Taalumnoconexion.Add(taalumnoconexion);
+                                        _npgsql_Context.SaveChanges();
+
+                                        Console.WriteLine("Alumno registrado en tabla alumno conexion");
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        msj = e.Message;
+                                    }
+                                    try
+                                    {
+                                        //_npgsql_Context.Taalumnoconexion.Add(taalumnoconexion);
+                                        //_npgsql_Context.SaveChanges();
+                                        //msj = "alumno conexión agregado en la versión 2";
+                                    }
+                                    catch (Exception e)
+                                    {
+
+                                        msj = "ERROR: " + e.Message;
+                                    }
+
+                                    //insersion en Taalumno estatus
+
+                                    long idAEst = _npgsql_Context.Talumnoestatus.Max(x => x.Alueid);
+                                    Talumnoestatus talumnoestatus = new Talumnoestatus();
+                                    talumnoestatus.Alueid = idAEst + 1;
+                                    talumnoestatus.Aluestid = 3478;
+                                    talumnoestatus.Aluid = alumov2.Aluid;
+                                    talumnoestatus.Aluestfecha = DateTime.Now;
+                                    talumnoestatus.Aluesthora = DateTime.Now;
+                                    talumnoestatus.Aluestanio = (short)anio;
+                                    talumnoestatus.Aluestperiodo = (short)periodo;
+                                    talumnoestatus.Usuid = 9;
+                                    talumnoestatus.Aluestcomentario = "PREINSCRITO";
+                                    string addAlumStatusv2 = "";
+
+                                    try
+                                    {
+                                        _npgsql_Context.Talumnoestatus.Add(talumnoestatus);
+                                        _npgsql_Context.SaveChanges();
+                                        addAlumStatusv2 = "Estatus alumno agregado ";
+                                    }
+                                    catch (Exception e)
+                                    {
+
+                                        addAlumStatusv2 = "ERROR: " + e.Message;
+                                    }
+
+
+                                    //Insercion en tabla de semaforo
+                                    //Tapreinscrito t = (from TA in _npgsql_Context.Tapreinscrito where TA.Aluid == crmidv2 select TA).FirstOrDefault();
+
+                                    string msj2 = "";
+                                    long idtapre = _npgsql_Context.Tapreinscrito.Max(x => x.Preid);
+                                    Tapreinscrito preinscirtos = new Tapreinscrito();
+                                    //id = _npgsql_Context.Tapreinscrito.Max(x => x.Preid);
+                                    //if (t != null)
+                                    //{
+                                    //    msj= ("Ya existe un registro con este id");
+                                    //}
+                                    //else
+                                    //{
+                                    preinscirtos.Preid = idtapre + 1;
+                                    preinscirtos.Aluid = alumov2.Aluid;
+                                    preinscirtos.Aacfid = taalumnoconexion.Aacfid;
+                                    preinscirtos.Prepag = true;
+                                    preinscirtos.Prepagreg = DateTime.Now;
+                                    preinscirtos.Prepagusuid = 1;
+                                    preinscirtos.Preee = false;
+                                    preinscirtos.Preeereg = DateTime.MinValue;
+                                    preinscirtos.Predoc = false;
+                                    preinscirtos.Predocusuid = 0;
+                                    preinscirtos.Predocreg = DateTime.MinValue;
+                                    preinscirtos.Prereg = false;
+                                    preinscirtos.Prehorario = false;
+                                    preinscirtos.Prehorariousuid = 0;
+                                    preinscirtos.Prehorarioreg = DateTime.MinValue;
+                                    preinscirtos.Preanio = alumov2.Alureganio;
+                                    preinscirtos.Preperiodo = (short?)periodo;
+                                    preinscirtos.Pretipo = "PRE";
+
+
+                                    int gp = (from GP in context.GeneralesProspecto where GP.GpporsMat == prospecto.GpporsMat.Trim() select GP.GpBeca).FirstOrDefault();
+
+                                    if (gp > 0)
+                                    {
+                                        preinscirtos.Prebecaa = true;
+                                        preinscirtos.Prebeca = true;
+                                        preinscirtos.Prebecareg = DateTime.Now;
+
+                                    }
+                                    else
+                                    {
+                                        preinscirtos.Prebecaa = false;
+                                        preinscirtos.Prebeca = false;
+                                        preinscirtos.Prebecareg = DateTime.MinValue;
+                                    }
+
+
+
+                                    preinscirtos.Prebecausuid = 5346;
+                                    preinscirtos.Preesquemareg = DateTime.MinValue;
+                                    preinscirtos.Preesquemausuid = 1;
+
+                                    try
+                                    {
+                                        _npgsql_Context.Tapreinscrito.Add(preinscirtos);
+                                        _npgsql_Context.SaveChanges();
+                                        // Console.WriteLine("Alumno registrado: " + al.Alunocontrol + " en TaPreinscito");
+                                        // msj = "Alumno registrado: " + al.Alunocontrol + " en TaPreinscito";
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        msj = e.Message;
+                                    }
+                                    //}
+
+
+                                    //Insersion de alumno en tabla usuario
+                                    Tusuario usu = new Tusuario();
+                                    Tusuario usuario = new Tusuario();
+                                    if (alumno == null)
+                                    {
+                                        usuario = (from US in _npgsql_Context.Tusuario where US.Usuusuario == prospecto.Gpmatricula.Trim() select US).FirstOrDefault();
+                                    }
+                                    else
+                                    {
+                                        usuario = (from US in _npgsql_Context.Tusuario where US.Usuusuario == alumno.AlMatricula.Trim() select US).FirstOrDefault();
+                                    }
+
+
+                                    if (usuario != null)
+                                    {
+                                        //Console.WriteLine("Este prospecto ya cuenta con un usuario creado");
+                                        msj = "Este prospecto  ya cuenta con un usuario creado";
+
+                                    }
+                                    else
+                                    {
+                                        long id = 0;
+                                        //Console.WriteLine("Generando usuario");
+                                        if (alumno == null)
+                                        {
+                                            id = (from AL in _npgsql_Context.Talumno where AL.Alunocontrol == prospecto.Gpmatricula.Trim() select AL.Aluid).FirstOrDefault();
+                                        }
+                                        else
+                                        {
+                                            id = (from AL in _npgsql_Context.Talumno where AL.Alunocontrol == alumno.AlMatricula.Trim() select AL.Aluid).FirstOrDefault();
+                                        }
+
+                                        long ultiID = _npgsql_Context.Tusuario.Max(x => x.Usuid);
+
+                                        usu.Usuid = ultiID + 1;
+                                        usu.Crmid = id;
+                                        if (alumno == null)
+                                        {
+                                            usu.Usuusuario = prospecto.Gpmatricula.ToUpper().Trim();
+                                            usu.Usupassword = prospecto.Gpmatricula.ToUpper().Trim();
+                                        }
+                                        else
+                                        {
+                                            usu.Usuusuario = alumno.AlMatricula.ToUpper().Trim();
+                                            usu.Usupassword = alumno.AlMatricula.ToUpper().Trim();
+                                        }
+
+                                        usu.Usumodulo = "academia";
+                                        usu.Usuactivo = 1;
+                                        usu.Usuperfil = "ALU";
+                                        usu.Ususession = 1;
+                                        usu.Altared = 0;
+                                        usu.Redpassword = null;
+                                        usu.Enviocorreo = null;
+                                        usu.Usuusesion = DateTime.MinValue;
+                                        usu.Anocontrol = null;
+                                        usu.Usumoodle = null;
+                                        usu.Usumoodleid = null;
+                                        usu.Usumoodleidb = null;
+                                        usu.Cambiocontra = 0;
+                                        usu.Usucambiocontra = 0;
+                                        usu.Usumoodleidm = null;
+                                        usu.UsuimagemovGxi = null;
+                                        usu.Usuimagemov = null;
+                                        usu.Usumovil = null;
+                                        usu.Usuip = null;
+                                        usu.Usuequipo = null;
+                                        usu.Usukey = null;
+                                        usu.Usulastpasschange = null;
+
+                                        try
+                                        {
+                                            _npgsql_Context.Tusuario.Add(usu);
+                                            _npgsql_Context.SaveChanges();
+                                            // Console.WriteLine("Se registro el usuario del alumno exitosamente");
+                                        }
+                                        catch (Exception e)
+                                        {
+                                            msj = e.Message;
+                                            //Console.WriteLine("Error al ingresar al usuario");
+                                        }
+                                    }
+
+
+                                    WsKardex(prospecto.Gpmatricula.Trim(), carrera);
+
+                                    //string enviaCorreo = correoCreaAlumno(alumno.AlNombre, alumno.AlApp, alumno.AlApm, alumno.AlMatricula, user.Usuusuario, user.Usupassword, alumno.AlCorreoInst);
+                                    if (alumno == null)
+                                    {
+                                        string nombre = prospecto.GpNombre.Trim() + " " + prospecto.GpApp.Trim() + " " + prospecto.GpApm.Trim();
+                                        string envio = EnvioCorreo(prospecto.Gpmatricula.Trim(), solicitudPago.EfectivoEmailBuyer.Trim(), nombre);
+                                    }
+                                    else
+                                    {
+                                        string nombre = alumno.AlNombre.Trim() + " " + alumno.AlApp.Trim() + " " + alumno.AlApm.Trim();
+                                        string envio = EnvioCorreo(alumno.AlMatricula.Trim(), solicitudPago.EfectivoEmailBuyer.Trim(), nombre);
+                                    }
+
+                                    // actualizacion de estatus a v3
+                                    string updInscrito = upd_EstatusInsc(pros.GpProspectoId);
+
+                                    if (updInscrito.ToUpper().Contains("ERROR"))
+                                    {
+                                        Console.WriteLine(updInscrito);
+                                        //return;
+                                    }
+                                    else
+                                    {
+                                        solicitudUpd.EfecState = estatus;
+                                        solicitudUpd.FechaEstatus = DateTime.Now;
+                                        solicitudUpd.FlagAsocio = true;
+                                        context.SaveChanges();
+                                    }
+
+                                   
+                                    //ERROR
+                                    if (alumno == null)
+                                    {
+                                        Console.WriteLine("Pago cerrado");
+                                        Console.WriteLine("Alumno creado: " + prospecto.Gpmatricula);
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine("Pago cerrado");
+                                        Console.WriteLine("Alumno creado: " + alumno.AlMatricula);
+                                    }
                                 }
 
                             }
-
-                            // si el alumno tiene un descuento asignado
-                            if (alumno?.AlMontoDesc > 0)
-                            {
-                                //obtenemos la lista de precios del desceunto
-                                ListaPrecios lpDesc = ObtListaPrecio(126);
-                                // asignamos el descuento que tenga el alumno a la lista de precios
-                                lpDesc.LpMonto = Convert.ToDecimal(alumno.AlMontoDesc) * -1;
-
-                                // registra el descuento por inscripción
-                                string regDescuentoConcepto = RegistraDescuento(alumno.AlId, 9, alumno.AlAnoPeriodoActual, alumno.AlPeriodoActual, lpDesc, cuentaEsquema);
-
-                                if (regDescuentoConcepto.ToUpper().Contains("ERROR"))
-                                {
-                                    Console.WriteLine(regDescuentoConcepto);
-                                }
-                            }
-
-                            // asignamos propiedades faltantes al Modelo pago
-                            pago.ApPagoId = idPago;
-                            pago.ApAlumnoId = alumno.AlId;
-                            pago.ApReferenciaId = idRef;
-
-                            //Asociamos el pago al propsecto
-                            string asociaProspecto = AsociaPagoProspecto(pago);
-
-                            if (asociaProspecto.ToUpper().Contains("ERROR"))
-                            {
-                                Console.WriteLine(asociaProspecto);
-                                return;
-                            }
-
-                            string updInscrito = upd_EstatusInsc(pros.GpProspectoId);
-
-                            if (updInscrito.ToUpper().Contains("ERROR"))
-                            {
-                                Console.WriteLine(updInscrito);
-                                return;
-                            }
-
-
-                            solicitudUpd.EfecState = estatus;
-                            solicitudUpd.FechaEstatus = DateTime.Now;
-                            solicitudUpd.FlagAsocio = true;
-                            context.SaveChanges();
-
-                            Console.WriteLine("Pago cerrado");
-                            Console.WriteLine("Alumno creado: " + alumno.AlMatricula);
 
                         }
 
@@ -395,9 +899,29 @@ namespace CentinelaV3
                             solicitudUpd.FlagAsocio = true;
                             context.SaveChanges();
 
+                            int i = AlumnoPagoAcademia(alumno.AlMatricula.Trim(), 2022, 3);
+                            int j = validaregistro(alumno.AlMatricula.Trim(), 2022, 3);
+
+                            if (i > 0 && j == 0)
+                            {
+                                if(alumno.AlStatusActual==34 && j == 0)
+                                {
+                                    Ws(alumno.AlMatricula.Trim(), 2022, 3, "REINS");
+                                    Console.WriteLine("Insersion de alumno PRE en semaforo en v2");
+                                }
+                                else
+                                {
+                                    Ws(alumno.AlMatricula.Trim(), 2022, 3, "REINS");
+                                    Console.WriteLine("Insersion de alumno REINS en semaforo en v2");
+                                }
+                            }
+                            else
+                            {
+                                Console.WriteLine("No cuenta con un pago para cambio de estatus / ya existe en el semaforo");
+                            }
+
 
                             Console.WriteLine("Pago cerrado");
-
 
 
                         }
@@ -406,7 +930,7 @@ namespace CentinelaV3
                     Console.WriteLine("<--->");
                 }
 
-                Console.ReadKey();
+
 
 
                 #region Prospectos
@@ -424,11 +948,15 @@ namespace CentinelaV3
                     if (!string.IsNullOrEmpty(existeM.Gpmatricula.Trim()))
                     {
                         //terminamos proceso si existe matricula
-                        return "ERROR la matricula ya existe " + existeM.Gpmatricula;
+                        string msg1 = "ERROR la matricula ya existe " + existeM.Gpmatricula;
+                    }
+                    else
+                    {
+                        matricula = Matricula(9);
                     }
 
                     //Generamos nueva matricula
-                    matricula = Matricula(9);
+
 
                     // Preguntamos si hubo algun error al generar la nueva matricula
                     if (matricula.ToUpper().Contains("ERROR"))
@@ -438,7 +966,16 @@ namespace CentinelaV3
                     }
 
                     //Actualizamos la matricula al prospecto
-                    msg = Upd_GPMatricula(existeM, matricula);
+                    if (!string.IsNullOrEmpty(existeM.Gpmatricula.Trim()))
+                    {
+                        //Actualizamos si ya existe una matroucla
+                        msg = Upd_GPMatricula(existeM, existeM.Gpmatricula);
+                    }
+                    else
+                    {
+                        msg = Upd_GPMatricula(existeM, matricula);
+                    }
+
 
                     //preguntamos si hubo algun error 
                     if (msg.ToUpper().Contains("ERROR"))
@@ -447,13 +984,25 @@ namespace CentinelaV3
                         return "ERROR: " + matricula;
                     }
 
-                    alumno = paseProsAlum(existeM, matricula);
-                    alumno = context.Alumno.First(a => a.AlMatricula == matricula);
+
+                    if (!string.IsNullOrEmpty(existeM.Gpmatricula.Trim()))
+                    {
+                        //Actualizamos si ya existe una matroucla
+                        alumno = paseProsAlum(existeM, existeM.Gpmatricula.Trim());
+                        alumno = context.Alumno.First(a => a.AlMatricula.Trim() == existeM.Gpmatricula.Trim());
+                    }
+                    else
+                    {
+                        alumno = paseProsAlum(existeM, matricula);
+                        alumno = context.Alumno.First(a => a.AlMatricula == matricula);
+                    }
+
                     matricula = alumno.AlMatricula;
 
                     if (alumno.AlBecaActual > 0)
                     {
                         List<BecaAlumno> existe_becasAlu = existe_becasAluu((long)alumno.AlId, (short)alumno.AlAnoPeriodoActual, (int)alumno.AlPeriodoActual);
+                        Becas beca = (from BE in context.Becas where BE.BecasId == alumno.AlBecaActual select BE).FirstOrDefault();
                         BecaAlumno becaAlumno = new BecaAlumno();
                         if (existe_becasAlu.Count == 0)
                         {
@@ -465,8 +1014,46 @@ namespace CentinelaV3
                             becaAlumno.Beparcialidades = alumno.AlBecaParcialidad;
                             becaAlumno.Betipo = 16;
                             becaAlumno.Usuid = existeM.Usuid;
-                            becaAlumno.Beestatus = 13;
+                            becaAlumno.Beestatus = 12;
+                            becaAlumno.Beconfirma = false;
                             AddBecaAlu(becaAlumno);
+
+                            //Insersion de beca en v2
+                            // string id = "";
+                            int idbeca = 0;
+                            string clavebeca = "", msj = "";
+                            using (var context2 = new npsqlContext())
+                            {
+                                int id = context2.Ccbeca.Max(x => x.Beid);
+                                //idbeca = Convert.ToInt32(id) + 1;
+
+
+                                Ccbeca becav2 = new Ccbeca();
+                                becav2.Beid = id + 1;
+                                becav2.Beusario = alumno.AlMatricula.Trim();
+                                becav2.Beperiodo = (short?)alumno.AlPeriodoActual;
+                                becav2.Beanio = (short?)alumno.AlAnoPeriodoActual;
+                                becav2.Beinscrip = alumno.AlBecaInscripcion;
+                                becav2.Beparcialidades = alumno.AlBecaParcialidad;
+                                becav2.Conceptoid = null;
+                                becav2.Bcid = beca.BecasClave.Trim();
+                                becav2.Betipo = "INI";
+                                becav2.Beestatus = "ACT";
+                                becav2.Beconfirma = 1;
+                                becav2.Beconfecha = DateTime.Now;
+
+                                try
+                                {
+                                    context2.Ccbeca.Add(becav2);
+                                    context.SaveChanges();
+                                    Console.WriteLine("Beca insertada en v2");
+                                }
+                                catch (Exception e)
+                                {
+                                    msj = e.Message;
+                                    Console.WriteLine("ERROR al insertar beca en v2");
+                                }
+                            }
                         }
 
                     }
@@ -538,77 +1125,99 @@ namespace CentinelaV3
                     anio = campana.Campanio;
                     carrera = carreras.CarreraClave.Trim();
 
+                    Alumno alu = (from AL in context.Alumno where AL.AlMatricula.Trim() == GPmatricula.Trim() select AL).FirstOrDefault();
+                    Alumno alumno = new Alumno();
                     #region Agrega alumno
                     // Creación de alumno
-                    Alumno alumno = new Alumno();
-                    alumno.AlMatricula = GPmatricula.Trim();
-                    alumno.AlFechaIngreso = DateTime.Today.Date;
-                    alumno.AlNombre = prospecto.GpNombre.Trim();
-                    alumno.AlApp = prospecto.GpApp.Trim();
-                    alumno.AlApm = prospecto.GpApm.Trim();
-                    alumno.AlFechaNac = DateTime.Today.Date;
-                    alumno.AlCorreoInst = GPmatricula.Trim().Replace("A", "a") + "@lainter.edu.mx";
-                    alumno.AlSexo = false;
-                    alumno.AlStatusActual = 9;
-                    alumno.AlCarrera = prospecto.Idcarrera;
-                    alumno.AlPeriodoActual = periodo;
-                    alumno.AlAnoPeriodoActual = anio;
-                    alumno.AlEsquemaPagoActual = (int)prospecto.GpModPago;
-                    alumno.AlBecaActual = prospecto.GpBeca;
-                    alumno.AlBecaParcialidad = prospecto.GpPorcentajeBeca;
-                    alumno.AlBecaInscripcion = prospecto.GpBecaInscripcion;
-                    alumno.AlDescPromocion = (int)prospecto.GpDescPromocion;
-                    alumno.AlDocumentos = false;
-                    alumno.AlFactura = false;
-                    alumno.AlFechaInicioNivel = DateTime.Today.Date;
-                    alumno.AlCicloActual = prospecto.Campid;
-                    alumno.AlModalidadActual = prospecto.GpModalidadInterez;
-                    alumno.AlCurp = "sinDatos";
-                    alumno.AlBecaInscripcion = prospecto.GpBecaInscripcion;
-                    alumno.AlDescPromocion = (int)prospecto.GpDescPromocion;
-                    alumno.AlCoutaAdmin = prospecto.GpCoutaAdmin;
-                    alumno.AlMontoDesc = prospecto.GpMontoDesc;
-                    alumno.AlSemestre = prospecto.GpSemestre;
-                    //Agregamos su usuario
-                    add_Usuario(alumno);
-                    #endregion
 
-                    // Agregamos al alumno
-                    matricula = Add_Alumno(alumno);
-                    //Obtenemos alumno creado
-                    alumno = context.Alumno.FirstOrDefault(a => a.AlMatricula == GPmatricula);
-
-                    #region GeneralesAlumno
-                    GeneralesAlumno generales = new GeneralesAlumno();
-                    //Asignamos propiedades para generales alumnos
-                    generales.GaAlumnoId = alumno.AlId;
-                    if (contacto?.ContId > 0)
+                    if (alu != null)
                     {
-                        generales.GaNombreTutor = contacto.NombreC ?? "";
-                        generales.GaApmtutor = contacto.ApmC ?? "";
-                        generales.GaApptutor = contacto.AppC ?? "";
-                        generales.GaTelefonoTutor = contacto.TelC ?? "";
-                        generales.GaTelefonoCasa = contacto.TelC ?? "";
-                        generales.GaCorreoAlternativo = contacto.EmailC ?? "";
+                        Console.WriteLine("El alumno ya existe");
                     }
                     else
                     {
-                        generales.GaNombreTutor = "";
-                        generales.GaApmtutor = "";
-                        generales.GaApptutor = "";
-                        generales.GaTelefonoTutor = "";
-                        generales.GaCorreoAlternativo = prospecto.GpCorreoElectronico ?? "";
-                        generales.GaTelefonoCasa = prospecto.GpTelefono ?? "";
+
+                        alumno.AlMatricula = GPmatricula.Trim();
+                        alumno.AlFechaIngreso = DateTime.Today.Date;
+                        alumno.AlNombre = prospecto.GpNombre.Trim();
+                        alumno.AlApp = prospecto.GpApp.Trim();
+                        alumno.AlApm = prospecto.GpApm.Trim();
+                        alumno.AlFechaNac = DateTime.Today.Date;
+                        alumno.AlCorreoInst = GPmatricula.Trim().Replace("A", "a") + "@lainter.edu.mx";
+                        alumno.AlSexo = false;
+                        alumno.AlStatusActual = 34;
+                        alumno.AlCarrera = prospecto.Idcarrera;
+                        alumno.AlPeriodoActual = periodo;
+                        alumno.AlAnoPeriodoActual = anio;
+                        alumno.AlEsquemaPagoActual = (int)prospecto.GpModPago;
+                        alumno.AlBecaActual = prospecto.GpBeca;
+                        alumno.AlBecaParcialidad = prospecto.GpPorcentajeBeca;
+                        alumno.AlBecaInscripcion = prospecto.GpBecaInscripcion;
+                        alumno.AlDescPromocion = (int)prospecto.GpDescPromocion;
+                        alumno.AlDocumentos = false;
+                        alumno.AlFactura = false;
+                        alumno.AlFechaInicioNivel = DateTime.Today.Date;
+                        alumno.AlCicloActual = prospecto.Campid;
+                        alumno.AlModalidadActual = prospecto.GpModalidadInterez;
+                        alumno.AlCurp = "sinDatos";
+                        alumno.AlBecaInscripcion = prospecto.GpBecaInscripcion;
+                        alumno.AlDescPromocion = (int)prospecto.GpDescPromocion;
+                        alumno.AlCoutaAdmin = prospecto.GpCoutaAdmin;
+                        alumno.AlMontoDesc = prospecto.GpMontoDesc;
+                        alumno.AlSemestre = prospecto.GpSemestre;
+                        //Agregamos su usuario
+                        add_Usuario(alumno);
+                        #endregion
+
+                        // Agregamos al alumno
+                        matricula = Add_Alumno(alumno);
+                        //Obtenemos alumno creado
+                        alumno = context.Alumno.FirstOrDefault(a => a.AlMatricula == GPmatricula);
+
+                        GeneralesAlumno generales = new GeneralesAlumno();
+                        //Asignamos propiedades para generales alumnos
+                        generales.GaAlumnoId = alumno.AlId;
+                        if (contacto?.ContId > 0)
+                        {
+                            generales.GaNombreTutor = contacto.NombreC ?? "";
+                            generales.GaApmtutor = contacto.ApmC ?? "";
+                            generales.GaApptutor = contacto.AppC ?? "";
+                            generales.GaTelefonoTutor = contacto.TelC ?? "";
+                            generales.GaTelefonoCasa = contacto.TelC ?? "";
+                            generales.GaCorreoAlternativo = contacto.EmailC ?? "";
+                        }
+                        else
+                        {
+                            generales.GaNombreTutor = "";
+                            generales.GaApmtutor = "";
+                            generales.GaApptutor = "";
+                            generales.GaTelefonoTutor = "";
+                            generales.GaCorreoAlternativo = prospecto.GpCorreoElectronico ?? "";
+                            generales.GaTelefonoCasa = prospecto.GpTelefono ?? "";
+                        }
+
+                        generales.GaTelefonoAlumno = prospecto.GpTelefono;
+                        generales.GaEstado = prospecto.GpEstado;
+                        generales.GaMunicipio = 1;
+                        generales.GaFechaNac = DateTime.Now;
+                        // Agregamos generales alumno
+                        Add_GenAlumno(generales);
+                        #endregion
+                        return alumno;
                     }
 
-                    generales.GaTelefonoAlumno = prospecto.GpTelefono;
-                    generales.GaEstado = prospecto.GpEstado;
-                    generales.GaMunicipio = 1;
-                    generales.GaFechaNac = DateTime.Now;
-                    // Agregamos generales alumno
-                    Add_GenAlumno(generales);
-                    #endregion
-                    return alumno;
+                    if (alu == null)
+                    {
+                        return alumno;
+                    }
+                    else
+                    {
+                        return alu;
+                    }
+
+
+                    #region GeneralesAlumno
+
                 }
 
                 // registra concepto
@@ -4166,16 +4775,16 @@ namespace CentinelaV3
                         msg = "ERROR: Linea no valida";
 
                     }
-                    else if (dp.DpImporteAplicado == 0)
-                    {
-                        msg = "ERROR: Importe aplicado no valido";
+                    //else if (dp.DpImporteAplicado == 0)
+                    //{
+                    //    msg = "ERROR: Importe aplicado no valido";
 
-                    }
-                    else if (dp.DpImportePendiente == 0)
-                    {
-                        msg = "ERROR: Importe pendiente no valido";
+                    //}
+                    //else if (dp.DpImportePendiente == 0)
+                    //{
+                    //    msg = "ERROR: Importe pendiente no valido";
 
-                    }
+                    //}
                     else if (dp.DpUsuid == 0)
                     {
                         msg = "ERROR: Importe pendiente no valido";
@@ -4361,6 +4970,168 @@ namespace CentinelaV3
                     return verDetCXC;
                 }
                 #endregion
+
+                #endregion
+
+                #region EnvioCorreo
+                string EnvioCorreo(string Matricula, string correo, string Nombre)
+                {
+                    //string msj = "";
+                    //Matricula = "A0000001";
+                    //correo = "izacc.romero@gmail.com";
+                    //Nombre = "izacc yair romero mastranzo";
+                    Console.WriteLine("Entra al envio de correo");
+                    MailMessage mail = new MailMessage();
+                    mail.Bcc.Add(new MailAddress("iy.romero@lainter.edu.mx"));
+                    mail.Bcc.Add(new MailAddress("m.martinez@lainter.edu.mx"));
+                    mail.Bcc.Add(new MailAddress("j.victoriano@lainter.edu.mx"));
+                    mail.Bcc.Add(new MailAddress("jefepromocion@lainter.edu.mx"));
+                    mail.Bcc.Add(new MailAddress("depto.pagos@lainter.edu.mx"));
+                    mail.Bcc.Add(new MailAddress("servicios.estudiantiles@lainter.edu.mx"));
+                    mail.Bcc.Add(new MailAddress("depto.escolar@lainter.edu.mx"));
+
+                    mail.To.Add(new MailAddress(correo.Trim()));
+                    //mail.To.Add(new MailAddress("m.martinez@lainter.edu.mx"));
+                    mail.Subject = "NUEVO ALUMNO | UNIVERSIDAD INTERAMERICANA";
+
+
+                    //mail.Body = string.Format("<h2>Hola " +  + "</h2> <br> <p>Bienvenido a la Universidad Interamericana, " +
+                    //    "para poder completar tu proceso de inscripción te pedimos que ingreses al siguiente link " +
+                    //    "clic aquí con los siguientes accesos personales.</p>");
+
+                    mail.Body = string.Format
+                    (
+                        "<div style='text-align:left;'><table style='text-align:left;'><br>" +
+                           "<div style='text-align:left;'><table style='text-align:left;'><br>" +
+                           "<tbody style='text-align:left;'><br>" +
+                           "<tr style='text-align:center;'><th style='text-align:center;'><img src='https://ci6.googleusercontent.com/proxy/_Rewf1_XF-nMs_Rv0n0ze2VHP9hIetOvshnJlKW-wm_jHgA_VyiPIZjfjUfI8zIrapmsbzL92efVeMvWWoLQepdmrEqBll9b6ftGlWmn=s0-d-e1-ft#http://interpue.com.mx/registroenlinea/Resources/Banner.png' width='85%' height='145px' class='CToWUd'></th></tr><br>" +
+                           "<table><tbody><tr><td><h4>HOLA " + Nombre.ToUpper().Trim() + "</h4> <br>" +
+                           "<tr><td><p style='text - align:justify'>Bienvenido a la Universidad Interamericana, para poder completar tu proceso de inscripción te pedimos que ingreses al siguiente link <a href='http://www.lainter.edu.mx/'>clic aquí</a> con los siguientes accesos personales.<br><br><strong><span class='il'>Usuario</span>: " + Matricula.ToUpper().Trim() + "</strong><br><strong><span class='il'>Contraseña</span>: " + Matricula.ToUpper().Trim() + "</strong><br><br></p></td></tr></tbody></table><br>" +
+                           "<tr><td>Paso 1.- Ingresa al siguiente link <strong><a href='http://www.lainter.edu.mx/' target='_blank' data-saferedirecturl='https://www.google.com/url?q=http://www.lainter.edu.mx/&amp;source=gmail&amp;ust=1654099471182000&amp;usg=AOvVaw3gD2ov03EPIymAwdXDkEQx'>clic aquí</a></strong>.<br>Paso 2.- En la opción 'Estudiantes' del menú, haz clic en el nivel al que ingresas. <br>Paso 3.- Introduce el <span class='il'>usuario</span> y <span class='il'>contraseña</span> que acabas de recibir.<br><br></td></tr>" +
+                           "<tr><td>Para ser un verdadero Halcón requieres cumplir con:<br><ol><li>PAGO DE INSCRIPCIÓN (Área de Pagos)</li><li>EXPEDIENTE ELECTRÓNICO (Sistema Estudiantil)</li><li>DOCUMENTOS (Área Control Escolar)</li><li>FIRMA DE REGLAMENTOS (Sistema Estudiantil, en el periodo y año de ingreso)</li><li>HORARIO (Coordinación correspondiente de la carrera)</li></ol>Te invitamos a que acudas a revisar tu estatus a los módulos de atención que te corresponden.<br><strong>Recuerda que tienes 30 días una vez iniciado el primer día de clases para cumplir con estos requisitos, de lo contrario puedes quedar inhabilitado.</strong><br></td></tr>" +
+                           "<tr><td>Quedamos al pendiente por cualquier duda, poniendo a tu disposición el correo de <a href='mailto: helpdesk@lainter.edu.mx' target='_blank'> helpdesk@lainter.edu.mx </a></td></tr>" +
+                           "<tr><td><br><center>Atentamente,</center></td></tr>" +
+                           "<tr><td><center><strong>Departamento de Desarrollo.</strong></center></td></tr>" +
+                           "</tbody></table></div>"
+                    );
+
+
+
+                    mail.From = new MailAddress("reportes@lainter.edu.mx", "Bienvenido Halcón");
+                    mail.IsBodyHtml = true;
+                    mail.Priority = MailPriority.Normal;
+
+                    SmtpClient smtp = new SmtpClient(); //Objeto smtp
+                    smtp.Host = "smtp.gmail.com";
+                    smtp.Port = 587;
+                    smtp.EnableSsl = true;
+                    smtp.UseDefaultCredentials = false;
+                    //Credenciales de inicio de sesion
+                    smtp.Credentials = new NetworkCredential("reportes@lainter.edu.mx", "Root.inter20");
+
+                    string output = null;
+
+                    try
+                    {
+                        smtp.Send(mail);
+                        output = "Corre electrónico fue enviado satisfactoriamente.";
+                    }
+                    catch (Exception ex)
+                    {
+                        output = "Error enviando correo electrónico: " + ex.Message;
+                    }
+                    finally
+                    {
+                        mail.Dispose();
+                    }
+
+                    Console.WriteLine(output);
+                    return output;
+                }
+
+
+                #endregion
+
+
+                #region Web panel
+
+                void Ws(string alunocontrol, int anio, int periodo, string pretipo)
+                {
+                    var wb = new WebClient();
+                    var data = new NameValueCollection();
+                    string url = "https://interpue.com.mx/controlescolar/reinscripcion.aspx?" + alunocontrol + "," + anio + "," + periodo + "," + pretipo;
+                    data[""] = "";
+
+                    var response = wb.UploadValues(url, "POST", data);
+                }
+
+
+                //Web pandel de proceso de kardex en v2
+                void WsKardex(string matricula, string carrera)
+                {
+                    var wb = new WebClient();
+                    var data = new NameValueCollection();
+                    string url = "https://interpue.com.mx/controlescolar/cargakardex.aspx?" + matricula + "," + carrera;
+                    data[""] = "";
+
+                    var response = wb.UploadValues(url, "POST", data);
+                }
+
+
+                int WsApiPagos(string matricula, int año, int periodo)
+                {
+                    int i = 0;
+                    var wb = new WebClient();
+                    var data = new NameValueCollection();
+                    string url = "https://pagos.interpue.com.mx/api/pagos/AlumnoPagoAcademia/" + matricula + "/" + año + "/" + periodo;
+                    data[""] = "";
+
+                    var response = wb.OpenRead(url);
+
+                    return i;
+                }
+
+                int AlumnoPagoAcademia(string matricula, int anio, int periodo)
+                {
+                    int tengo = 0;
+                    List<ViewPagoAlumno> ListPagoAlumno = (from vi in context.ViewPagoAlumno
+                                                           where vi.CpcAlumnoClave.Trim() == matricula.Trim() && vi.CpcAño == anio && vi.CpcPeriodo == periodo
+                                                           select vi).ToList();
+                    tengo = ListPagoAlumno.Count();
+                    return tengo;
+                }
+
+                int validaregistro(string matriucla, int anio, int periodo)
+                {
+                    int x = 0;
+                    List<Tapreinscrito> pre = new List<Tapreinscrito>();
+                    using (var _npgsqlContext = new npsqlContext())
+                    {
+                        //Talumno al = (from TAL in _npgsqlContext.Talumno where TAL.Alunocontrol.Trim() == matriucla.Trim() select TAL).FirstOrDefault();
+                        long id = (from ALUM in _npgsqlContext.Talumno where ALUM.Alunocontrol.Trim()== matriucla.Trim() select ALUM.Aluid).FirstOrDefault(); 
+                        if (id == 0 )
+                        {
+                            x = 0;
+                        }
+                        else
+                        {
+                             pre = (from P in _npgsqlContext.Tapreinscrito where P.Aluid == id && P.Preanio == anio && P.Preperiodo==periodo select P).ToList();
+                        }
+
+                        if (pre.Count > 0)
+                        {
+                            x = pre.Count;
+                        }
+                        else
+                        {
+                            x = 0;
+                        }
+                    }
+
+                        return x;
+                }
+
+
 
                 #endregion
 
