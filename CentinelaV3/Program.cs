@@ -149,7 +149,7 @@ namespace CentinelaV3
                     // Si la solicitud fue aprovada
                     if (estatus.Trim() == "APPROVED")
                     {
-                        
+
                         Console.WriteLine("Transacción aprovada");
 
                         string AP = solicitudPago.Alumno.Substring(0, 1);
@@ -245,10 +245,12 @@ namespace CentinelaV3
                             Campana campana = new Campana();
                             Carreras carreras = new Carreras();
                             GeneralesProspecto prospecto = new GeneralesProspecto();
+                            Niveles nivel = new Niveles();
 
                             prospecto = context.GeneralesProspecto.First(gp => gp.GpporsMat == mat);
                             campana = GetCampana(prospecto.Campid);
                             carreras = context.Carreras.First(c => c.Idcarrera == prospecto.Idcarrera);
+                            nivel = context.Niveles.First(n => n.NivelId == carreras.NivelId);
                             int idcrm = 0;
 
                             periodo = campana.Campperiodo;
@@ -399,17 +401,29 @@ namespace CentinelaV3
 
                                     //GeneralesProspecto gp = (from GP in _context.GeneralesProspecto where GP.GpporsMat == prospecto.GpporsMat.Trim() select GP).FirstOrDefault();
 
-                                    if (prospecto.Idcarrera == 10)
+                                    if (nivel.NivelId == 2)
                                     {
                                         alumov2.Aludivision = "BAC";
                                     }
-                                    else if (prospecto.Idcarrera == 49 || prospecto.Idcarrera == 51 || prospecto.Idcarrera == 53 || prospecto.Idcarrera == 58 || prospecto.Idcarrera == 59 || prospecto.Idcarrera == 61)
+                                    else if (nivel.NivelId == 3)
                                     {
                                         alumov2.Aludivision = "EDC";
                                     }
-                                    else
+                                    else if(nivel.NivelId == 2)
                                     {
                                         alumov2.Aludivision = "LIC";
+                                    }
+                                    else if (nivel.NivelId == 4)
+                                    {
+                                        alumov2.Aludivision = "DOC";
+                                    }
+                                    else if (nivel.NivelId == 5)
+                                    {
+                                        alumov2.Aludivision = "CV";
+                                    }
+                                    else
+                                    {
+                                        alumov2.Aludivision = "TOD";
                                     }
 
 
@@ -792,7 +806,7 @@ namespace CentinelaV3
                                         context.SaveChanges();
                                     }
 
-                                   
+
                                     //ERROR
                                     if (alumno == null)
                                     {
@@ -900,24 +914,29 @@ namespace CentinelaV3
                             context.SaveChanges();
 
                             int i = AlumnoPagoAcademia(alumno.AlMatricula.Trim(), 2022, 3);
-                            int j = validaregistro(alumno.AlMatricula.Trim(), 2022, 3);
+                            
 
-                            if (i > 0 && j == 0)
+                            if (i > 0)
                             {
-                                if(alumno.AlStatusActual==34 && j == 0)
+                                int j = validaregistro(alumno.AlMatricula.Trim(), 2022, 3);
+                                if (alumno.AlStatusActual == 34 && j == 0)
                                 {
-                                    Ws(alumno.AlMatricula.Trim(), 2022, 3, "REINS");
+                                    Ws(alumno.AlMatricula.Trim(), 2022, 3, "PRE");
                                     Console.WriteLine("Insersion de alumno PRE en semaforo en v2");
                                 }
-                                else
+                                else if (alumno.AlStatusActual != 34 && j == 0)
                                 {
                                     Ws(alumno.AlMatricula.Trim(), 2022, 3, "REINS");
                                     Console.WriteLine("Insersion de alumno REINS en semaforo en v2");
                                 }
+                                else
+                                {
+                                    Console.WriteLine("ya existe en el semaforo un registro de este alumno");
+                                }
                             }
                             else
                             {
-                                Console.WriteLine("No cuenta con un pago para cambio de estatus / ya existe en el semaforo");
+                                Console.WriteLine("No cuenta con un pago para cambio de estatus ");
                             }
 
 
@@ -5108,14 +5127,14 @@ namespace CentinelaV3
                     using (var _npgsqlContext = new npsqlContext())
                     {
                         //Talumno al = (from TAL in _npgsqlContext.Talumno where TAL.Alunocontrol.Trim() == matriucla.Trim() select TAL).FirstOrDefault();
-                        long id = (from ALUM in _npgsqlContext.Talumno where ALUM.Alunocontrol.Trim()== matriucla.Trim() select ALUM.Aluid).FirstOrDefault(); 
-                        if (id == 0 )
+                        long id = (from ALUM in _npgsqlContext.Talumno where ALUM.Alunocontrol.Trim() == matriucla.Trim() select ALUM.Aluid).FirstOrDefault();
+                        if (id == 0)
                         {
                             x = 0;
                         }
                         else
                         {
-                             pre = (from P in _npgsqlContext.Tapreinscrito where P.Aluid == id && P.Preanio == anio && P.Preperiodo==periodo select P).ToList();
+                            pre = (from P in _npgsqlContext.Tapreinscrito where P.Aluid == id && P.Preanio == anio && P.Preperiodo == periodo select P).ToList();
                         }
 
                         if (pre.Count > 0)
@@ -5128,10 +5147,8 @@ namespace CentinelaV3
                         }
                     }
 
-                        return x;
+                    return x;
                 }
-
-
 
                 #endregion
 
