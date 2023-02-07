@@ -12,6 +12,7 @@ using System.Xml;
 using System.Net.Mail;
 using System.Collections.Specialized;
 using System.Net.Http;
+using System.Net.Mime;
 
 namespace CentinelaV3
 {
@@ -409,7 +410,7 @@ namespace CentinelaV3
                                     {
                                         alumov2.Aludivision = "EDC";
                                     }
-                                    else if(nivel.NivelId == 2)
+                                    else if (nivel.NivelId == 1)
                                     {
                                         alumov2.Aludivision = "LIC";
                                     }
@@ -914,17 +915,34 @@ namespace CentinelaV3
                             context.SaveChanges();
 
                             int i = AlumnoPagoAcademia(alumno.AlMatricula.Trim(), 2022, 3);
-                            
+                            int valida = 0;
+                            foreach (var item in detalleCuentasxC)
+                            {
+                                CuentasPorCobrar cpc = (from CP in context.CuentasPorCobrar where CP.CpcId == item.DcpcCuentaId select CP).FirstOrDefault();
+                                if (alumno.AlAnoPeriodoActual == cpc.CpcAño && alumno.AlPeriodoActual == cpc.CpcPeriodo)
+                                {
+                                    valida = valida + 1;
+                                }
+                                else
+                                {
+                                    valida = 0;
+                                }
+
+                            }
+
+
+
 
                             if (i > 0)
                             {
                                 int j = validaregistro(alumno.AlMatricula.Trim(), 2022, 3);
-                                if (alumno.AlStatusActual == 34 && j == 0)
+
+                                if (valida > 0 && j == 0)
                                 {
                                     Ws(alumno.AlMatricula.Trim(), 2022, 3, "PRE");
                                     Console.WriteLine("Insersion de alumno PRE en semaforo en v2");
                                 }
-                                else if (alumno.AlStatusActual != 34 && j == 0)
+                                else if (valida == 0 && j == 0)
                                 {
                                     Ws(alumno.AlMatricula.Trim(), 2022, 3, "REINS");
                                     Console.WriteLine("Insersion de alumno REINS en semaforo en v2");
@@ -1323,8 +1341,6 @@ namespace CentinelaV3
 
 
                 }
-
-
                 //Asociamos el pago al alumno nuevo y cerramos la cuenta
                 string AsociaPagoProspecto(AlumnoPagos pago)
                 {
@@ -1524,9 +1540,7 @@ namespace CentinelaV3
                 #region Alumnos
 
                 #endregion
-
                 #region General
-
                 // agregamos usuario
                 Usuario add_Usuario(Alumno Alu)
                 {
@@ -2317,8 +2331,6 @@ namespace CentinelaV3
                                 _cuentaD.DcpcFechaCierreCuenta = DateTime.MinValue;
 
                             }
-
-
                             msg = UpdCuentaPorCobrarDetalle(_cuentaD);
 
                             if (!msg.ToUpper().Contains("ERROR"))
@@ -2338,6 +2350,8 @@ namespace CentinelaV3
                             {
                                 break;
                             }
+
+                            string convenio = VerificacionConveniosIndividual(_cuentaD.DcpcId);
                         }
                     }
 
@@ -4991,7 +5005,6 @@ namespace CentinelaV3
                 #endregion
 
                 #endregion
-
                 #region EnvioCorreo
                 string EnvioCorreo(string Matricula, string correo, string Nombre)
                 {
@@ -4999,6 +5012,10 @@ namespace CentinelaV3
                     //Matricula = "A0000001";
                     //correo = "izacc.romero@gmail.com";
                     //Nombre = "izacc yair romero mastranzo";
+
+                    string filename = Directory.GetCurrentDirectory() +"\\Manual.pdf";
+                    Attachment data = new Attachment(filename, MediaTypeNames.Application.Octet);
+
                     Console.WriteLine("Entra al envio de correo");
                     MailMessage mail = new MailMessage();
                     mail.Bcc.Add(new MailAddress("iy.romero@lainter.edu.mx"));
@@ -5025,20 +5042,31 @@ namespace CentinelaV3
                            "<tbody style='text-align:left;'><br>" +
                            "<tr style='text-align:center;'><th style='text-align:center;'><img src='https://ci6.googleusercontent.com/proxy/_Rewf1_XF-nMs_Rv0n0ze2VHP9hIetOvshnJlKW-wm_jHgA_VyiPIZjfjUfI8zIrapmsbzL92efVeMvWWoLQepdmrEqBll9b6ftGlWmn=s0-d-e1-ft#http://interpue.com.mx/registroenlinea/Resources/Banner.png' width='85%' height='145px' class='CToWUd'></th></tr><br>" +
                            "<table><tbody><tr><td><h4>HOLA " + Nombre.ToUpper().Trim() + "</h4> <br>" +
-                           "<tr><td><p style='text - align:justify'>Bienvenido a la Universidad Interamericana, para poder completar tu proceso de inscripción te pedimos que ingreses al siguiente link <a href='http://www.lainter.edu.mx/'>clic aquí</a> con los siguientes accesos personales.<br><br><strong><span class='il'>Usuario</span>: " + Matricula.ToUpper().Trim() + "</strong><br><strong><span class='il'>Contraseña</span>: " + Matricula.ToUpper().Trim() + "</strong><br><br></p></td></tr></tbody></table><br>" +
+                           "<tr><td><p style='text - align:justify'>Bienvenido a la Universidad Interamericana, para poder completar tu proceso de inscripción te pedimos que ingreses al siguiente link <a href='http://www.lainter.edu.mx/'>clic aquí</a> con los siguientes accesos personales.<br><br><strong><span class='il'>Usuario</span>: " + Matricula.ToUpper().Trim() + "</strong><br><strong><span class='il'>Contraseña</span>: " + Matricula.ToUpper().Trim() + "</strong>" +
+
                            "<tr><td>Paso 1.- Ingresa al siguiente link <strong><a href='http://www.lainter.edu.mx/' target='_blank' data-saferedirecturl='https://www.google.com/url?q=http://www.lainter.edu.mx/&amp;source=gmail&amp;ust=1654099471182000&amp;usg=AOvVaw3gD2ov03EPIymAwdXDkEQx'>clic aquí</a></strong>.<br>Paso 2.- En la opción 'Estudiantes' del menú, haz clic en el nivel al que ingresas. <br>Paso 3.- Introduce el <span class='il'>usuario</span> y <span class='il'>contraseña</span> que acabas de recibir.<br><br></td></tr>" +
-                           "<tr><td>Para ser un verdadero Halcón requieres cumplir con:<br><ol><li>PAGO DE INSCRIPCIÓN (Área de Pagos)</li><li>EXPEDIENTE ELECTRÓNICO (Sistema Estudiantil)</li><li>DOCUMENTOS (Área Control Escolar)</li><li>FIRMA DE REGLAMENTOS (Sistema Estudiantil, en el periodo y año de ingreso)</li><li>HORARIO (Coordinación correspondiente de la carrera)</li></ol>Te invitamos a que acudas a revisar tu estatus a los módulos de atención que te corresponden.<br><strong>Recuerda que tienes 30 días una vez iniciado el primer día de clases para cumplir con estos requisitos, de lo contrario puedes quedar inhabilitado.</strong><br></td></tr>" +
+
+                           "<br><br><strong><span class='il'>Correo Institucional</span>: " + Matricula.Replace("A", "a").Trim() + "@lainter.edu.mx" + "</strong><br><strong><span class='il'>Contraseña</span>: " + Matricula.ToUpper().Trim() + "</strong><br><br></p></td></tr></tbody></table><br>" +
+                           "<tr><td>Para ingresar a tu correo instiucional:" +
+                           "<br><ol><li>Inicia sesión desde la plataforma de Gmail." +
+                           "</li><li>Una vez que inicies sesion te solicitaran cambiar tu contraseña" +
+                           "</li><li>Te adjuntamos el manual para ligar tu correo a tu dispositivo Android" +
+
+                           "<tr><td>Para ser un verdadero Halcón requieres cumplir con:<br><ol><li>PAGO DE INSCRIPCIÓN (Área de Pagos)</li><li>EXPEDIENTE ELECTRÓNICO (Sistema Estudiantil)</li><li>DOCUMENTOS (Área Servicios Estudiantiles)</li><li>FIRMA DE REGLAMENTOS (Sistema Estudiantil, en el periodo y año de ingreso)</li><li>HORARIO (Coordinación correspondiente de la carrera)</li></ol>" +
+
+                           "</li></ol>Te invitamos a que acudas a revisar tu estatus a los módulos de atención que te corresponden.<br><strong>Recuerda que tienes 30 días una vez iniciado el primer día de clases para cumplir con estos requisitos, de lo contrario puedes quedar inhabilitado.</strong><br></td></tr>" +
                            "<tr><td>Quedamos al pendiente por cualquier duda, poniendo a tu disposición el correo de <a href='mailto: helpdesk@lainter.edu.mx' target='_blank'> helpdesk@lainter.edu.mx </a></td></tr>" +
                            "<tr><td><br><center>Atentamente,</center></td></tr>" +
                            "<tr><td><center><strong>Departamento de Desarrollo.</strong></center></td></tr>" +
                            "</tbody></table></div>"
                     );
 
-
-
                     mail.From = new MailAddress("reportes@lainter.edu.mx", "Bienvenido Halcón");
                     mail.IsBodyHtml = true;
                     mail.Priority = MailPriority.Normal;
+                    mail.Attachments.Add(data);
+
+
 
                     SmtpClient smtp = new SmtpClient(); //Objeto smtp
                     smtp.Host = "smtp.gmail.com";
@@ -5070,8 +5098,6 @@ namespace CentinelaV3
 
 
                 #endregion
-
-
                 #region Web panel
 
                 void Ws(string alunocontrol, int anio, int periodo, string pretipo)
@@ -5150,14 +5176,59 @@ namespace CentinelaV3
                     return x;
                 }
 
+
+                String VerificacionConveniosIndividual(long id)
+                {
+                    string msg = "";
+                    List<DetalleConvenio> listConvenios = new List<DetalleConvenio>();
+                    using (var _context = new Intererpv3testContext())
+                    {
+                        listConvenios = ((from D in _context.DetalleConvenio
+                                          join C in _context.Convenios on D.DcConvenio equals C.ConId
+                                          where D.DcCuentaDetalle == id
+                                          select D)).ToList();
+
+
+                        if (listConvenios.Count > 0)
+                        {
+                            if (id == 0)
+                                msg = "ERROR: ID DE CONVENIO INVÁLIDO";
+                            else
+                            {
+                                var param = new SqlParameter[] {
+                        new SqlParameter() {
+                            ParameterName = "@DC_CuentaDetalle",
+                            SqlDbType =  System.Data.SqlDbType.Int,
+                            Direction = System.Data.ParameterDirection.Input,
+                            Value = id
+                        },
+                        new SqlParameter() {
+                            ParameterName = "@msg",
+                            SqlDbType =  System.Data.SqlDbType.VarChar,
+                            Size = 250,
+                            Direction = System.Data.ParameterDirection.Output,
+                        }};
+
+                                try
+                                {
+                                    _context.Database.ExecuteSqlRaw("Exec VerificacionConveniosIndividual @DC_CuentaDetalle, @msg out", param);
+                                    msg = param[param.Count() - 1].Value.ToString();
+                                }
+                                catch (Exception m)
+                                {
+                                    msg = "ERROR: " + m.Message;
+                                }
+                            }
+                        }
+
+                        else
+                            msg = "ERROR: NO CUENTA CON CONVENIO";
+                        return msg;
+                    }
+                }
+
                 #endregion
-
             }
-
-
         }
-
-
-
     }
 }

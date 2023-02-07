@@ -19,6 +19,7 @@ namespace CentinelaV3.Data.sql
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseSqlServer(@"Data Source=74.208.235.157;Initial Catalog=InterERPv3P;User ID=sa;Password=Root.inter2020!;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False");
+            //optionsBuilder.UseSqlServer(@"Data Source=74.208.235.157;Initial Catalog=InterERPV3Clone;User ID=sa;Password=Root.inter2020!;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False");
         }
 
 
