@@ -13,6 +13,7 @@ using System.Net.Mail;
 using System.Collections.Specialized;
 using System.Net.Http;
 using System.Net.Mime;
+using System.Security.Cryptography;
 
 namespace CentinelaV3
 {
@@ -37,7 +38,7 @@ namespace CentinelaV3
                     //obtenemos la solicitud ACTUAL
                     SolicitudPago solicitudUpd = (from SP in context.SolicitudPago where SP.SolicitudId == solicitudPago.SolicitudId select SP).FirstOrDefault();
 
-
+                    #region x
                     // asigna el metodo de pago
                     if (solicitudPago.EfectivoMetodoPago == 1)
                     {
@@ -146,7 +147,7 @@ namespace CentinelaV3
                         context.SaveChanges();
                         Console.WriteLine("Operación Declinada");
                     }
-
+                    #endregion
                     // Si la solicitud fue aprovada
                     if (estatus.Trim() == "APPROVED")
                     {
@@ -257,6 +258,7 @@ namespace CentinelaV3
                             periodo = campana.Campperiodo;
                             anio = campana.Campanio;
                             carrera = carreras.CarreraClave.Trim();
+
                             using (var _npgsql_Context = new npsqlContext())
                             {
                                 int crmidv2 = (from TCRM in _npgsql_Context.Tcrm where TCRM.Crmclave == prospecto.GpporsMat.Trim() select TCRM.Crmid).FirstOrDefault();
@@ -692,7 +694,7 @@ namespace CentinelaV3
                                     }
                                     //}
 
-
+                                    #region alumno
                                     //Insersion de alumno en tabla usuario
                                     Tusuario usu = new Tusuario();
                                     Tusuario usuario = new Tusuario();
@@ -775,7 +777,7 @@ namespace CentinelaV3
                                             //Console.WriteLine("Error al ingresar al usuario");
                                         }
                                     }
-
+                                    #endregion
 
                                     WsKardex(prospecto.Gpmatricula.Trim(), carrera);
 
@@ -914,37 +916,69 @@ namespace CentinelaV3
                             solicitudUpd.FlagAsocio = true;
                             context.SaveChanges();
 
-                            int i = AlumnoPagoAcademia(alumno.AlMatricula.Trim(), 2022, 3);
+
+                            int AñoValidadcion = 0, PeriodoValidacion = 0;
+                            
                             int valida = 0;
-                            foreach (var item in detalleCuentasxC)
+
+
+                            CuentasPorCobrar cpc = (from CP in context.CuentasPorCobrar where CP.CpcId == detalleCuentasxC[0].DcpcCuentaId select CP).FirstOrDefault();
+
+                            AñoValidadcion = cpc.CpcAño;
+                            PeriodoValidacion = cpc.CpcPeriodo;
+
+                            if (alumno.AlAnoPeriodoActual == cpc.CpcAño && alumno.AlPeriodoActual == cpc.CpcPeriodo)
                             {
-                                CuentasPorCobrar cpc = (from CP in context.CuentasPorCobrar where CP.CpcId == item.DcpcCuentaId select CP).FirstOrDefault();
-                                if (alumno.AlAnoPeriodoActual == cpc.CpcAño && alumno.AlPeriodoActual == cpc.CpcPeriodo)
-                                {
-                                    valida = valida + 1;
-                                }
-                                else
-                                {
-                                    valida = 0;
-                                }
+                                valida = 1;
 
                             }
 
+                            //foreach (var item in detalleCuentasxC)
+                            //{
+                            //    CuentasPorCobrar cpc = (from CP in context.CuentasPorCobrar where CP.CpcId == item.DcpcCuentaId select CP).FirstOrDefault();
+
+                            //    if (alumno.AlAnoPeriodoActual == cpc.CpcAño && alumno.AlPeriodoActual == cpc.CpcPeriodo)
+                            //    {
+                            //        valida = valida + 1;
+
+                            //    }
+                            //    else
+                            //    {
+                            //        valida = 0;
+                            //    }
+
+                            //    AñoValidadcion = cpc.CpcAño;
+                            //    PeriodoValidacion = cpc.CpcPeriodo;
+                            //}
 
 
+                            int i = AlumnoPagoAcademia(alumno.AlMatricula.Trim(), AñoValidadcion, PeriodoValidacion);
 
                             if (i > 0)
                             {
-                                int j = validaregistro(alumno.AlMatricula.Trim(), 2022, 3);
+                                //List<CuentasPorCobrar> CuentasAnteriores = (from cp in context.CuentasPorCobrar
+                                //                                      where cp.CpcAlumnoClave == alumno.AlMatricula.Trim()
+                                //                                      orderby cp.CpcAño descending
+                                //                                      orderby cp.CpcPeriodo descending
+                                //                                      select cp).ToList();
+
+                                int j = 0;
+
+                                //if (CuentasAnteriores[0].CpcAño == AñoValidadcion && CuentasAnteriores[0].CpcPeriodo == PeriodoValidacion && CuentasAnteriores.Count > 1)
+                                //{
+                                //    
+                                //}
+
+                                j = validaregistro(alumno.AlMatricula.Trim(), AñoValidadcion, PeriodoValidacion);
 
                                 if (valida > 0 && j == 0)
                                 {
-                                    Ws(alumno.AlMatricula.Trim(), 2022, 3, "PRE");
+                                    Ws(alumno.AlMatricula.Trim(), AñoValidadcion, PeriodoValidacion, "PRE");
                                     Console.WriteLine("Insersion de alumno PRE en semaforo en v2");
                                 }
                                 else if (valida == 0 && j == 0)
                                 {
-                                    Ws(alumno.AlMatricula.Trim(), 2022, 3, "REINS");
+                                    Ws(alumno.AlMatricula.Trim(), AñoValidadcion, PeriodoValidacion, "REINS");
                                     Console.WriteLine("Insersion de alumno REINS en semaforo en v2");
                                 }
                                 else
@@ -967,7 +1001,7 @@ namespace CentinelaV3
                     Console.WriteLine("<--->");
                 }
 
-
+/*///////////////////////////////////////////////////////////////////////////////////////////////////////////////////*/
 
 
                 #region Prospectos
